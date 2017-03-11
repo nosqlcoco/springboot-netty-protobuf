@@ -1,0 +1,9 @@
+compiler.descriptorFilePath=D\:\\devtools\\protobuf\\include\\google\\protobuf\\descriptor.proto
+compiler.enableProjectSettings=true
+compiler.protocFilePath=D\:\\devtools\\protobuf\\bin\\protoc.exe
+compiler.refreshOutputDirectory=true
+compiler.refreshProject=false
+eclipse.preferences.version=1
+paths.directoryPaths=${workspace_loc\:/${project}/src/main/java/com/netty/common/protobuf}
+paths.filesInMultipleDirectories=true
+paths.filesInOneDirectoryOnly=false

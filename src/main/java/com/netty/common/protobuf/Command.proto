@@ -1,0 +1,39 @@
+syntax = "proto2";
+
+option java_package="com.netty.common.protobuf";
+option java_outer_classname = "Command";
+import "Command.proto";
+/**
+ * 指令类型
+ */
+enum CommandType {
+	/**
+	 * 验证
+	 */
+	AUTH = 1;
+	/**
+	 * ping
+	 */
+	PING = 2;
+	/**
+	 * pong
+	 */
+	PONG = 3;
+	/**
+	 * 上传数据
+	 */
+	UPLOAD_DATA = 4;
+	/**
+	 * 推送数据
+	 */
+	PUSH_DATA = 5;
+
+	/**
+	 * 验证返回
+	 */
+	AUTH_BACK = 11;
+
+	UPLOAD_DATA_BACK = 14;
+
+	PUSH_DATA_BACK = 15;
+}
