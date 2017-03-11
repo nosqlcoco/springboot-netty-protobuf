@@ -19,7 +19,10 @@ import io.netty.util.AttributeKey;
 import io.netty.util.ReferenceCountUtil;
 
 /**
- * 连接认证Handler，连接成功后客户端发送CommandType.AUTH指令，Sever端验证通过后返回CommandType.AUTH_BACK指令
+ * 连接认证Handler
+ * 1. 连接成功后客户端发送CommandType.AUTH指令，Sever端验证通过后返回CommandType.AUTH_BACK指令
+ * 2. 处理心跳指令
+ * 3. 触发下一个Handler
  * @author Ke Shanqiang
  *
  */

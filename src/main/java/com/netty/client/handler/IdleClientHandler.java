@@ -19,7 +19,6 @@ public class IdleClientHandler extends SimpleChannelInboundHandler<Message> {
 	private int heartbeatCount = 0;
 	private final static String CLIENTID = "123456789";
 
-
 	/**
 	 * @param nettyClient
 	 */
@@ -39,7 +38,7 @@ public class IdleClientHandler extends SimpleChannelInboundHandler<Message> {
 			} else if (event.state() == IdleState.ALL_IDLE) {
 				type = "all idle";
 			}
-			System.out.println( ctx.channel().remoteAddress()+"超时类型：" + type);
+			log.debug(ctx.channel().remoteAddress()+"超时类型：" + type);
 			sendPingMsg(ctx);
 		} else {
 			super.userEventTriggered(ctx, evt);

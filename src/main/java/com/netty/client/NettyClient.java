@@ -23,7 +23,11 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.IdleStateHandler;
-
+/**
+ * netty客户端
+ * @author lenovo
+ *
+ */
 public class NettyClient {
 	public Logger log = Logger.getLogger(this.getClass());	
 
@@ -68,15 +72,13 @@ public class NettyClient {
 				}
 			});
 			doConnect();
-			//			// Start the client.
-			//			ChannelFuture f = b.connect(host, port).sync();
-			//			
-			//			// Wait until the connection is closed.
-			//			f.channel().closeFuture().sync();
 		}catch (Exception e) {
-			// TODO: handle exception
+			e.printStackTrace();
 		}
 	}
+	/**
+	 * 重连，连接失败10秒后重试连接
+	 */
 	public void doConnect() {
 		
 		if (channel != null && channel.isActive()) {
@@ -95,8 +97,6 @@ public class NettyClient {
 					log.info("Connect to server successfully!");
 				} else {
 					log.warn("Failed to connect to server, try connect after 10s");
-					
-					futureListener.cause().printStackTrace();
 					futureListener.channel().eventLoop().schedule(() -> doConnect(), 10, TimeUnit.SECONDS);
 				}
 			}

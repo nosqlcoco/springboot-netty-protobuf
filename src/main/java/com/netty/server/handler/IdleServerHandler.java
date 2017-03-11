@@ -7,6 +7,9 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
+/** 
+ * 连接空闲Handler
+ */
 @Component
 public class IdleServerHandler extends ChannelInboundHandlerAdapter {
 	public Logger log = Logger.getLogger(this.getClass());

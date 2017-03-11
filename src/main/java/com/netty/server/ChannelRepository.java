@@ -7,7 +7,7 @@ import io.netty.channel.Channel;
 
 /**
  * Channel Manager
- * @author lenovo
+ * @author Ke Shanqiang
  *
  */
 public class ChannelRepository {
