@@ -33,15 +33,14 @@ public class NettyClient {
 
 	private final static String HOST = "127.0.0.1";
 	private final static int PORT = 8090;
-	private int tryTimes = 0;
-
-	private final static int readerIdleTimeSeconds = 20;//读操作空闲20秒
-	private final static int writerIdleTimeSeconds = 20;//写操作空闲20秒
-	private final static int allIdleTimeSeconds = 40;//读写全部空闲40秒
-
+	private final static int READER_IDLE_TIME_SECONDS = 20;//读操作空闲20秒
+	private final static int WRITER_IDLE_TIME_SECONDS = 20;//写操作空闲20秒
+	private final static int ALL_IDLE_TIME_SECONDS = 40;//读写全部空闲40秒
+	
 	private NioEventLoopGroup workerGroup = new NioEventLoopGroup(4);
 	private Channel channel;
 	private Bootstrap b;
+	private int tryTimes = 0;
 
 
 	public static void main(String[] args) throws Exception {
@@ -60,14 +59,17 @@ public class NettyClient {
 				@Override  
 				public void initChannel(SocketChannel ch) throws Exception {  
 					ChannelPipeline p = ch.pipeline();
+					
+					p.addLast("idleStateHandler", new IdleStateHandler(READER_IDLE_TIME_SECONDS
+							, WRITER_IDLE_TIME_SECONDS, ALL_IDLE_TIME_SECONDS, TimeUnit.SECONDS));
+					p.addLast("idleTimeoutHandler", new IdleClientHandler(NettyClient.this));
+					
 					p.addLast(new ProtobufVarint32FrameDecoder());
 					p.addLast(new ProtobufDecoder(MessageBase.getDefaultInstance()));
 
 					p.addLast(new ProtobufVarint32LengthFieldPrepender());
 					p.addLast(new ProtobufEncoder());
 
-					p.addLast("idleStateHandler", new IdleStateHandler(readerIdleTimeSeconds, writerIdleTimeSeconds, allIdleTimeSeconds,TimeUnit.SECONDS));
-					p.addLast("idleTimeoutHandler", new IdleClientHandler(NettyClient.this));
 					p.addLast("clientHandler", new LogicClientHandler());
 				}
 			});
@@ -93,7 +95,8 @@ public class NettyClient {
 				
 				if (futureListener.isSuccess()) {
 					channel = futureListener.channel();
-					channel.closeFuture().sync();
+					channel.closeFuture();
+					workerGroup.shutdownGracefully();
 					log.info("Connect to server successfully!");
 				} else {
 					log.warn("Failed to connect to server, try connect after 10s");

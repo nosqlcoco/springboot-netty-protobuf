@@ -51,7 +51,6 @@ public class Application{
         tcpServer.start();
 	}
 
-	
 	@Value("${tcp.port}")
     private int tcpPort;
 
