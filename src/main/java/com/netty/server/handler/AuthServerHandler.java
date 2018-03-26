@@ -37,6 +37,7 @@ public class AuthServerHandler extends ChannelInboundHandlerAdapter {
 	@Qualifier("channelRepository")
 	ChannelRepository channelRepository;
 	
+	@SuppressWarnings("deprecation")
 	@Override
 	public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
 		MessageBase msgBase = (MessageBase)msg;

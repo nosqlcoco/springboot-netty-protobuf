@@ -9,12 +9,12 @@ import com.netty.client.handler.LogicClientHandler;
 import com.netty.common.protobuf.Message.MessageBase;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
+import io.netty.channel.EventLoop;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -36,73 +36,63 @@ public class NettyClient {
 	private final static int READER_IDLE_TIME_SECONDS = 20;//读操作空闲20秒
 	private final static int WRITER_IDLE_TIME_SECONDS = 20;//写操作空闲20秒
 	private final static int ALL_IDLE_TIME_SECONDS = 40;//读写全部空闲40秒
-	
-	private NioEventLoopGroup workerGroup = new NioEventLoopGroup(4);
-	private Channel channel;
-	private Bootstrap b;
-	private int tryTimes = 0;
 
+	private EventLoopGroup loop = new NioEventLoopGroup();
 
 	public static void main(String[] args) throws Exception {
 		NettyClient client = new NettyClient();  
-		client.connect(HOST, PORT);  
+		client.run();  
 	}
 
-	public void connect(String host, int port) throws Exception {
-
+	public void run() throws Exception {
 		try {  
-			b = new Bootstrap();  
-			b.group(workerGroup);  
-			b.channel(NioSocketChannel.class);  
-			b.option(ChannelOption.SO_KEEPALIVE, true);  
-			b.handler(new ChannelInitializer<SocketChannel>() {
-				@Override  
-				public void initChannel(SocketChannel ch) throws Exception {  
-					ChannelPipeline p = ch.pipeline();
-					
-					p.addLast("idleStateHandler", new IdleStateHandler(READER_IDLE_TIME_SECONDS
-							, WRITER_IDLE_TIME_SECONDS, ALL_IDLE_TIME_SECONDS, TimeUnit.SECONDS));
-					p.addLast("idleTimeoutHandler", new IdleClientHandler(NettyClient.this));
-					
-					p.addLast(new ProtobufVarint32FrameDecoder());
-					p.addLast(new ProtobufDecoder(MessageBase.getDefaultInstance()));
-
-					p.addLast(new ProtobufVarint32LengthFieldPrepender());
-					p.addLast(new ProtobufEncoder());
-
-					p.addLast("clientHandler", new LogicClientHandler());
-				}
-			});
-			doConnect();
+			doConnect(new Bootstrap(), loop);
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
+
 	/**
-	 * 重连，连接失败10秒后重试连接
+	 * netty client 连接，连接失败10秒后重试连接
 	 */
-	public void doConnect() {
-		
-		if (channel != null && channel.isActive()) {
-			return;
-		}
-		tryTimes++;
-		log.info(tryTimes);
-		ChannelFuture future = b.connect(HOST, PORT);
-		
-		future.addListener(new ChannelFutureListener() {
-			public void operationComplete(ChannelFuture futureListener) throws Exception {
-				
-				if (futureListener.isSuccess()) {
-					channel = futureListener.channel();
-					channel.closeFuture();
-					workerGroup.shutdownGracefully();
-					log.info("Connect to server successfully!");
-				} else {
-					log.warn("Failed to connect to server, try connect after 10s");
-					futureListener.channel().eventLoop().schedule(() -> doConnect(), 10, TimeUnit.SECONDS);
-				}
+	public Bootstrap doConnect(Bootstrap bootstrap, EventLoopGroup eventLoopGroup) {
+		try {
+			if (bootstrap != null) {
+				bootstrap.group(eventLoopGroup);
+				bootstrap.channel(NioSocketChannel.class);
+				bootstrap.option(ChannelOption.SO_KEEPALIVE, true);
+				bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+					@Override
+					public void initChannel(SocketChannel ch) throws Exception {
+						ChannelPipeline p = ch.pipeline();
+
+						p.addLast("idleStateHandler", new IdleStateHandler(READER_IDLE_TIME_SECONDS
+								, WRITER_IDLE_TIME_SECONDS, ALL_IDLE_TIME_SECONDS, TimeUnit.SECONDS));
+						p.addLast("idleTimeoutHandler", new IdleClientHandler(NettyClient.this));
+
+						p.addLast(new ProtobufVarint32FrameDecoder());
+						p.addLast(new ProtobufDecoder(MessageBase.getDefaultInstance()));
+
+						p.addLast(new ProtobufVarint32LengthFieldPrepender());
+						p.addLast(new ProtobufEncoder());
+
+						p.addLast("clientHandler", new LogicClientHandler());
+					}
+				});
+				bootstrap.remoteAddress(HOST, PORT);
+				ChannelFuture f = bootstrap.connect().addListener((ChannelFuture futureListener)->{
+					final EventLoop eventLoop = futureListener.channel().eventLoop();
+					if (!futureListener.isSuccess()) {
+						log.warn("Failed to connect to server, try connect after 10s");
+						futureListener.channel().eventLoop().schedule(() -> doConnect(new Bootstrap(), eventLoop), 10, TimeUnit.SECONDS);
+					}
+				});
+				f.channel().closeFuture().sync();
+				eventLoopGroup.shutdownGracefully();
 			}
-		});
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		return bootstrap;
 	}
 }

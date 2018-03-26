@@ -72,6 +72,7 @@ public class LogicServerHandler extends ChannelInboundHandlerAdapter{
 
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
 		Attribute<String> attr = ctx.attr(clientInfo);
